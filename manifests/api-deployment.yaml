@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: tu_usuario/api:latest
+          image: nginx:latest
           ports:
             - containerPort: 80
 ---
