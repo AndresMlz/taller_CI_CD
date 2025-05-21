@@ -207,7 +207,8 @@ Si la sincronización no funciona:
 
 ---
 
-## Autor
+## Autores
+
 Santiago Zafra 
 
 Edwin Caro 
