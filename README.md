@@ -208,7 +208,9 @@ Si la sincronización no funciona:
 ---
 
 ## Autor
-Santiago Zafra
-Edwin Caro
-Andres Matallana
+Santiago Zafra 
+
+Edwin Caro 
+
+Andres Matallana 
 
