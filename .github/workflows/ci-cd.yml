@@ -1,0 +1,46 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME_API: ${{ github.repository }}/api
+      IMAGE_NAME_LOAD: ${{ github.repository }}/loadtester
+
+    steps:
+      - name: 🔄 Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: 🧠 Entrenar modelo
+        run: |
+          pip install scikit-learn joblib
+          python train_model.py
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Build & Push API image
+        run: |
+          docker build -t $REGISTRY/${IMAGE_NAME_API}:latest ./api
+          docker push $REGISTRY/${IMAGE_NAME_API}:latest
+
+      - name: 🐳 Build & Push LoadTester image
+        run: |
+          docker build -t $REGISTRY/${IMAGE_NAME_LOAD}:latest ./loadtester
+          docker push $REGISTRY/${IMAGE_NAME_LOAD}:latest
