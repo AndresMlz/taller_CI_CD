@@ -1,4 +1,3 @@
-
 # Taller CI/CD y GitOps para Despliegue de API de IA
 
 Este proyecto implementa una arquitectura de CI/CD con enfoque GitOps utilizando Docker, Kubernetes, GitHub Actions y Argo CD para desplegar una API basada en un modelo de inteligencia artificial. Además, se incluye observabilidad mediante Prometheus y Grafana, así como generación de carga automática para simular tráfico.
@@ -24,14 +23,13 @@ taller_CI_CD/
 ├── api/
 │   ├── app/
 │   │   ├── main.py                     # API FastAPI con endpoints /predict y /metrics
-│   │   └── model.pkl                   # Modelo entrenado
+│   │   └── train_model.py              # Script para entrenar y guardar el modelo
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── loadtester/
 │   ├── main.py                         # Script que genera peticiones aleatorias a /predict
 │   ├── Dockerfile
 │   └── requirements.txt
-├── train_model.py                      # Script para entrenar y guardar el modelo
 ├── manifests/                          # Manifiestos Kubernetes
 │   ├── api-deployment.yaml
 │   ├── loadtester-deployment.yaml
@@ -44,6 +42,8 @@ taller_CI_CD/
 ├── argo-cd/
 │   ├── app.yaml                        # Definición GitOps de la aplicación para Argo CD
 │   └── crd-application.yaml            # CRD para Argo CD (si se instala manualmente)
+├── argocd-install.yaml                 # Archivo de instalación de Argo CD
+└── train_model.py                      # Script principal para entrenar el modelo
 ```
 
 ---
@@ -101,6 +101,109 @@ taller_CI_CD/
 - Aún se está resolviendo un problema con la visualización de métricas.
 - El sistema puede ser escalado, versionado o adaptado a otro modelo sin modificar la arquitectura.
 - Todos los componentes están desacoplados y automatizados mediante CI/CD y GitOps.
+
+---
+
+## Requisitos Previos
+
+- Kubernetes cluster configurado y funcionando
+- Docker instalado y configurado
+- Argo CD instalado (se puede instalar usando el archivo `argocd-install.yaml`)
+- Acceso a GitHub Container Registry (GHCR)
+- Python 3.x
+- kubectl configurado con acceso al cluster
+
+---
+
+## Instrucciones de Instalación
+
+1. **Instalar Argo CD**:
+   ```bash
+   kubectl apply -f argocd-install.yaml
+   ```
+
+2. **Configurar GitHub Container Registry**:
+   - Crear un token de acceso personal en GitHub con permisos para el registro
+   - Crear un secreto en Kubernetes:
+     ```bash
+     kubectl create secret docker-registry ghcr-secret \
+       --docker-server=ghcr.io \
+       --docker-username=<tu-usuario> \
+       --docker-password=<tu-token> \
+       --docker-email=<tu-email>
+     ```
+
+3. **Desplegar la Aplicación**:
+   ```bash
+   kubectl apply -f argo-cd/app.yaml
+   ```
+
+---
+
+## Guía de Uso
+
+### Acceso a la API
+La API está expuesta a través de un servicio Kubernetes. Para acceder localmente:
+```bash
+kubectl port-forward svc/api 8081:80
+```
+La API estará disponible en `http://localhost:8081` con los siguientes endpoints:
+- `/predict`: Para realizar predicciones
+- `/metrics`: Para ver las métricas de Prometheus
+
+### Acceso a Grafana
+```bash
+kubectl port-forward svc/grafana 3000:3000
+```
+Acceder a `http://localhost:3000` (credenciales por defecto: admin/admin)
+
+### Acceso a Prometheus
+```bash
+kubectl port-forward svc/prometheus 9090:9090
+```
+Acceder a `http://localhost:9090`
+
+---
+
+## Solución de Problemas
+
+### Problemas de Conexión con la API
+Si el port-forwarding falla con el error "Connection refused":
+1. Verificar que el pod de la API está corriendo:
+   ```bash
+   kubectl get pods -l app=api
+   ```
+2. Verificar los logs del pod:
+   ```bash
+   kubectl logs -l app=api
+   ```
+3. Asegurarse que el servicio está correctamente configurado:
+   ```bash
+   kubectl get svc api
+   ```
+
+### Problemas con Métricas
+Si las métricas no aparecen en Grafana:
+1. Verificar que Prometheus está scrapeando correctamente:
+   ```bash
+   kubectl get pods -l app=prometheus
+   kubectl logs -l app=prometheus
+   ```
+2. Verificar la configuración de Prometheus:
+   ```bash
+   kubectl get configmap prometheus-config -o yaml
+   ```
+
+### Problemas con Argo CD
+Si la sincronización no funciona:
+1. Verificar el estado de la aplicación en Argo CD:
+   ```bash
+   kubectl get applications -n argocd
+   ```
+2. Revisar los logs de Argo CD:
+   ```bash
+   kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller
+   ```
 
 ---
 
