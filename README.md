@@ -208,6 +208,7 @@ Si la sincronización no funciona:
 ---
 
 ## Autor
-Cristian Javier Diaz Alvarez - Pontificia Universidad Javeriana
+Santiago Zafra
+Edwin Caro
+Andres Matallana
 
-Fecha: Mayo 2025
